@@ -1,13 +1,9 @@
-import { portfolioProjects, PortfolioProject } from '@/data/portfolio';
+import { getProjectById } from '@/lib/portfolio';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { notFound } from 'next/navigation';
 
-export async function generateStaticParams() {
-  return portfolioProjects.map((project) => ({
-    id: project.id,
-  }));
-}
+export const dynamic = 'force-dynamic';
 
 export default async function PortfolioDetailPage({
   params,
@@ -15,7 +11,7 @@ export default async function PortfolioDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const project = portfolioProjects.find((p) => p.id === id);
+  const project = await getProjectById(id);
 
   if (!project) {
     notFound();

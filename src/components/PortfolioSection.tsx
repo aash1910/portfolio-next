@@ -1,6 +1,6 @@
-import { portfolioProjects } from '@/data/portfolio';
+import type { PortfolioProjectDTO } from '@/lib/portfolio';
 
-export default function PortfolioSection() {
+export default function PortfolioSection({ projects }: { projects: PortfolioProjectDTO[] }) {
   return (
     <section id="portfolio" className="portfolio section light-background">
       {/* Section Title */}
@@ -19,7 +19,7 @@ export default function PortfolioSection() {
           </ul>
 
           <div className="row gy-4 isotope-container" data-aos="fade-up" data-aos-delay="200">
-            {portfolioProjects.map((project) => (
+            {projects.map((project) => (
               <div key={project.id} className={`col-lg-4 col-md-6 portfolio-item isotope-item ${project.filter}`}>
                 <div className="portfolio-content h-100">
                   <img src={project.thumbnail} className="img-fluid" alt={project.title} />

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { Providers } from "@/components/Providers";
 
 export const metadata: Metadata = {
   title: "Portfolio of Ashraful Islam Masum",
@@ -36,7 +37,7 @@ export default function RootLayout({
         {/* Main CSS File */}
         <link href="/assets/css/main.css" rel="stylesheet" />
       </head>
-      <body>{children}</body>
+      <body><Providers>{children}</Providers></body>
     </html>
   );
 }
