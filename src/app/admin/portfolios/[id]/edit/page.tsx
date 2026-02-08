@@ -3,6 +3,7 @@ import { getProjectById } from '@/lib/portfolio';
 import { notFound } from 'next/navigation';
 import { updatePortfolio } from '../../actions';
 import { DeletePortfolioButton } from '@/app/admin/portfolios/DeletePortfolioButton';
+import { RepeaterField } from '@/app/admin/portfolios/RepeaterField';
 
 export default async function EditPortfolioPage({
   params,
@@ -22,7 +23,7 @@ export default async function EditPortfolioPage({
         </Link>
         <h1 className="text-2xl font-semibold text-gray-800">Edit: {project.title}</h1>
       </div>
-      <form action={updatePortfolio} className="max-w-2xl space-y-4 bg-white p-6 rounded-lg border border-gray-200">
+      <form action={updatePortfolio} className="w-full space-y-4 bg-white p-6 rounded-lg border border-gray-200">
         <input type="hidden" name="id" value={project.id} />
         <div>
           <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">Title</label>
@@ -38,7 +39,11 @@ export default async function EditPortfolioPage({
         </div>
         <div>
           <label htmlFor="filter" className="block text-sm font-medium text-gray-700 mb-1">Filter</label>
-          <input id="filter" name="filter" type="text" defaultValue={project.filter} className="w-full border border-gray-300 rounded px-3 py-2" />
+          <select id="filter" name="filter" defaultValue={project.filter} className="w-full border border-gray-300 rounded px-3 py-2 bg-white">
+            <option value="filter-app">App</option>
+            <option value="filter-product">Software</option>
+            <option value="filter-website">Website</option>
+          </select>
         </div>
         <div>
           <label htmlFor="thumbnail" className="block text-sm font-medium text-gray-700 mb-1">Thumbnail URL/path</label>
@@ -60,18 +65,9 @@ export default async function EditPortfolioPage({
           <label htmlFor="images" className="block text-sm font-medium text-gray-700 mb-1">Images (one path per line)</label>
           <textarea id="images" name="images" rows={3} defaultValue={project.images.join('\n')} className="w-full border border-gray-300 rounded px-3 py-2 font-mono text-sm" />
         </div>
-        <div>
-          <label htmlFor="keyFeatures" className="block text-sm font-medium text-gray-700 mb-1">Key features (one per line)</label>
-          <textarea id="keyFeatures" name="keyFeatures" rows={5} defaultValue={project.keyFeatures.join('\n')} className="w-full border border-gray-300 rounded px-3 py-2" />
-        </div>
-        <div>
-          <label htmlFor="challenges" className="block text-sm font-medium text-gray-700 mb-1">Challenges (one per line)</label>
-          <textarea id="challenges" name="challenges" rows={3} defaultValue={project.challenges.join('\n')} className="w-full border border-gray-300 rounded px-3 py-2" />
-        </div>
-        <div>
-          <label htmlFor="achievements" className="block text-sm font-medium text-gray-700 mb-1">Achievements (one per line)</label>
-          <textarea id="achievements" name="achievements" rows={3} defaultValue={project.achievements.join('\n')} className="w-full border border-gray-300 rounded px-3 py-2" />
-        </div>
+        <RepeaterField name="keyFeatures" label="Key features (HTML allowed)" initialValues={project.keyFeatures} placeholder="e.g. <strong>Feature</strong>: Description" />
+        <RepeaterField name="challenges" label="Challenges" initialValues={project.challenges} placeholder="Challenge description" />
+        <RepeaterField name="achievements" label="Achievements" initialValues={project.achievements} placeholder="Achievement description" />
         <div>
           <label htmlFor="demoUrl" className="block text-sm font-medium text-gray-700 mb-1">Demo URL</label>
           <input id="demoUrl" name="demoUrl" type="url" defaultValue={project.demoUrl ?? ''} className="w-full border border-gray-300 rounded px-3 py-2" />

@@ -20,6 +20,30 @@ function parseLines(s: string): string[] {
     .filter(Boolean);
 }
 
+function parseChallenges(formData: FormData): string[] {
+  const getAll = formData.getAll('challenges');
+  if (getAll.length > 0) {
+    return getAll.map((s) => String(s).trim()).filter(Boolean);
+  }
+  return parseLines((formData.get('challenges') as string) || '');
+}
+
+function parseAchievements(formData: FormData): string[] {
+  const getAll = formData.getAll('achievements');
+  if (getAll.length > 0) {
+    return getAll.map((s) => String(s).trim()).filter(Boolean);
+  }
+  return parseLines((formData.get('achievements') as string) || '');
+}
+
+function parseKeyFeatures(formData: FormData): string[] {
+  const getAll = formData.getAll('keyFeatures');
+  if (getAll.length > 0) {
+    return getAll.map((s) => String(s).trim()).filter(Boolean);
+  }
+  return parseLines((formData.get('keyFeatures') as string) || '');
+}
+
 export async function createPortfolio(formData: FormData) {
   await ensureAuth();
   const id = (formData.get('id') as string).trim().toLowerCase().replace(/\s+/g, '-');
@@ -33,9 +57,9 @@ export async function createPortfolio(formData: FormData) {
   const techStack = (formData.get('techStack') as string).trim();
   const overview = (formData.get('overview') as string).trim();
   const images = parseLines((formData.get('images') as string) || '');
-  const keyFeatures = parseLines((formData.get('keyFeatures') as string) || '');
-  const challenges = parseLines((formData.get('challenges') as string) || '');
-  const achievements = parseLines((formData.get('achievements') as string) || '');
+  const keyFeatures = parseKeyFeatures(formData);
+  const challenges = parseChallenges(formData);
+  const achievements = parseAchievements(formData);
   const demoUrl = (formData.get('demoUrl') as string)?.trim() || null;
   const demoCredentials = (formData.get('demoCredentials') as string)?.trim() || null;
   const androidAppUrl = (formData.get('androidAppUrl') as string)?.trim() || null;
@@ -80,9 +104,9 @@ export async function updatePortfolio(formData: FormData) {
   const techStack = (formData.get('techStack') as string).trim();
   const overview = (formData.get('overview') as string).trim();
   const images = parseLines((formData.get('images') as string) || '');
-  const keyFeatures = parseLines((formData.get('keyFeatures') as string) || '');
-  const challenges = parseLines((formData.get('challenges') as string) || '');
-  const achievements = parseLines((formData.get('achievements') as string) || '');
+  const keyFeatures = parseKeyFeatures(formData);
+  const challenges = parseChallenges(formData);
+  const achievements = parseAchievements(formData);
   const demoUrl = (formData.get('demoUrl') as string)?.trim() || null;
   const demoCredentials = (formData.get('demoCredentials') as string)?.trim() || null;
   const androidAppUrl = (formData.get('androidAppUrl') as string)?.trim() || null;
