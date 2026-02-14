@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { createPortfolio } from '../actions';
 import { RepeaterField } from '../RepeaterField';
+import { ThumbnailField } from '../ThumbnailField';
 
 export default function NewPortfolioPage() {
   return (
@@ -36,11 +37,7 @@ export default function NewPortfolioPage() {
             <option value="filter-website">Website</option>
           </select>
         </div>
-        <div>
-          <label htmlFor="thumbnail" className="block text-sm font-medium text-gray-700 mb-1">Thumbnail URL/path</label>
-          <input id="thumbnail" name="thumbnail" type="text" className="w-full border border-gray-300 rounded px-3 py-2" placeholder="/assets/portfolio/..."
-          />
-        </div>
+        <ThumbnailField name="thumbnail" label="Thumbnail" />
         <div>
           <label htmlFor="projectDate" className="block text-sm font-medium text-gray-700 mb-1">Project date</label>
           <input id="projectDate" name="projectDate" type="text" className="w-full border border-gray-300 rounded px-3 py-2" placeholder="2020-21" />
@@ -53,10 +50,7 @@ export default function NewPortfolioPage() {
           <label htmlFor="overview" className="block text-sm font-medium text-gray-700 mb-1">Overview</label>
           <textarea id="overview" name="overview" rows={4} required className="w-full border border-gray-300 rounded px-3 py-2" />
         </div>
-        <div>
-          <label htmlFor="images" className="block text-sm font-medium text-gray-700 mb-1">Images (one path per line)</label>
-          <textarea id="images" name="images" rows={3} className="w-full border border-gray-300 rounded px-3 py-2 font-mono text-sm" placeholder="/assets/portfolio/x/1.png" />
-        </div>
+        <RepeaterField name="images" label="Images" initialValues={[]} placeholder="/assets/portfolio/x/1.png" />
         <RepeaterField name="keyFeatures" label="Key features (HTML allowed)" initialValues={[]} placeholder="e.g. <strong>Feature</strong>: Description" />
         <RepeaterField name="challenges" label="Challenges" initialValues={[]} placeholder="Challenge description" />
         <RepeaterField name="achievements" label="Achievements" initialValues={[]} placeholder="Achievement description" />

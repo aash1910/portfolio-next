@@ -19,14 +19,16 @@ export default function PortfolioSection({ projects }: { projects: PortfolioProj
           </ul>
 
           <div className="row gy-4 isotope-container" data-aos="fade-up" data-aos-delay="200">
-            {projects.map((project) => (
+            {projects.map((project) => {
+              const thumbSrc = project.thumbnail || '/assets/placeholder.png';
+              return (
               <div key={project.id} className={`col-lg-4 col-md-6 portfolio-item isotope-item ${project.filter}`}>
                 <div className="portfolio-content h-100">
-                  <img src={project.thumbnail} className="img-fluid" alt={project.title} />
+                  <img src={thumbSrc} className="img-fluid" alt={project.title} />
                   <div className="portfolio-info">
                     <h4>{project.title}</h4>
                     <p>{project.shortDescription}</p>
-                    <a href={project.thumbnail} title={project.title} data-gallery="portfolio-gallery-app" className="glightbox preview-link">
+                    <a href={thumbSrc} title={project.title} data-gallery="portfolio-gallery-app" className="glightbox preview-link">
                       <i className="bi bi-zoom-in"></i>
                     </a>
                     <a href={`/portfolio/${project.id}/`} title="More Details" className="details-link">
@@ -35,7 +37,8 @@ export default function PortfolioSection({ projects }: { projects: PortfolioProj
                   </div>
                 </div>
               </div>
-            ))}
+            );
+            })}
           </div>
         </div>
       </div>
