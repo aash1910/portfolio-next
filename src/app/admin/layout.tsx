@@ -18,15 +18,24 @@ export default async function AdminLayout({
           Portfolio Admin
         </a>
         <div className="flex items-center gap-4">
-          {session?.user?.email && (
-            <span className="text-sm text-gray-600">{session.user.email}</span>
+          {session?.user?.email ? (
+            <>
+              <span className="text-sm text-gray-600">{session.user.email}</span>
+              <a
+                href="/api/auth/signout"
+                className="text-sm text-gray-600 hover:text-gray-900"
+              >
+                Sign out
+              </a>
+            </>
+          ) : (
+            <a
+              href="/admin/login/"
+              className="text-sm text-gray-600 hover:text-gray-900"
+            >
+              Login
+            </a>
           )}
-          <a
-            href="/api/auth/signout"
-            className="text-sm text-gray-600 hover:text-gray-900"
-          >
-            Sign out
-          </a>
         </div>
       </header>
       <main className="p-4">{children}</main>
