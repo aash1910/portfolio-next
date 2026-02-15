@@ -1,4 +1,5 @@
 import { getProjectById } from '@/lib/portfolio';
+import { getSettings } from '@/lib/settings';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { notFound } from 'next/navigation';
@@ -11,7 +12,7 @@ export default async function PortfolioDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const project = await getProjectById(id);
+  const [project, settings] = await Promise.all([getProjectById(id), getSettings()]);
 
   if (!project) {
     notFound();
@@ -19,7 +20,7 @@ export default async function PortfolioDetailPage({
 
   return (
     <div className="portfolio-details-page">
-      <Header />
+      <Header settings={settings.header} />
       <main className="main">
         {/* Page Title */}
         <div className="page-title dark-background">

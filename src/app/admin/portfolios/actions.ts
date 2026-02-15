@@ -147,7 +147,7 @@ export async function updatePortfolio(formData: FormData) {
   revalidatePath('/');
   revalidatePath('/admin/portfolios');
   revalidatePath(`/portfolio/${id}`);
-  redirect('/admin/portfolios');
+  return { success: true };
 }
 
 export async function deletePortfolio(formData: FormData) {
@@ -161,6 +161,7 @@ export async function deletePortfolio(formData: FormData) {
 }
 
 const PORTFOLIO_ASSETS_DIR = 'public/assets/portfolio';
+const IMG_ASSETS_DIR = 'public/assets/img';
 const ALLOWED_EXT = new Set(['.png', '.jpg', '.jpeg', '.gif', '.webp']);
 
 /** Returns a unique filename: timestamp + original extension (e.g. 1771080976508.png). */
@@ -170,20 +171,30 @@ function timestampFileName(originalName: string): string {
   return `${Date.now()}${safeExt}`;
 }
 
-/** Uploads a thumbnail file to public/assets/portfolio/[folder]/ and returns the public path. */
+/** Uploads a thumbnail file. Use baseDir "img" for assets/img, otherwise saves to assets/portfolio/[folder]. */
 export async function uploadThumbnailToLocal(formData: FormData): Promise<{ path?: string; error?: string }> {
   await ensureAuth();
   const file = formData.get('file') as File | null;
   if (!file || typeof file.arrayBuffer !== 'function') {
     return { error: 'No file provided' };
   }
+  const baseDir = (formData.get('baseDir') as string)?.trim() || 'portfolio';
+  const fileName = timestampFileName(file.name || 'image.png');
+  const buffer = Buffer.from(await file.arrayBuffer());
+
+  if (baseDir === 'img') {
+    const dir = path.join(process.cwd(), IMG_ASSETS_DIR);
+    await mkdir(dir, { recursive: true });
+    const filePath = path.join(dir, fileName);
+    await writeFile(filePath, buffer);
+    return { path: `/assets/img/${fileName}` };
+  }
+
   const folder = (formData.get('folder') as string)?.trim() || 'uploads';
   const safeFolder = folder.replace(/[^a-zA-Z0-9_-]/g, '');
-  const fileName = timestampFileName(file.name || 'image.png');
   const dir = path.join(process.cwd(), PORTFOLIO_ASSETS_DIR, safeFolder);
   await mkdir(dir, { recursive: true });
   const filePath = path.join(dir, fileName);
-  const buffer = Buffer.from(await file.arrayBuffer());
   await writeFile(filePath, buffer);
   const publicPath = `/assets/portfolio/${safeFolder}/${fileName}`;
   return { path: publicPath };
@@ -237,10 +248,39 @@ export async function getLocalPortfolioFolders(): Promise<{ folders: string[] }>
   return { folders };
 }
 
-/** Deletes an image file under public/assets/portfolio if not used by another thumbnail or images field. */
+/** Returns list of image paths under public/assets/img for the library picker. */
+export async function getLocalImgImages(): Promise<{ paths: string[] }> {
+  await ensureAuth();
+  const { readdir } = await import('fs/promises');
+  const root = path.join(process.cwd(), IMG_ASSETS_DIR);
+  const paths: string[] = [];
+  try {
+    const entries = await readdir(root, { withFileTypes: true });
+    for (const e of entries) {
+      if (e.isFile() && ALLOWED_EXT.has(path.extname(e.name).toLowerCase())) {
+        paths.push(`/assets/img/${e.name}`);
+      }
+    }
+  } catch {
+    // directory may not exist yet
+  }
+  paths.sort();
+  return { paths };
+}
+
+/** Deletes an image file under public/assets/portfolio or public/assets/img. */
 export async function deletePortfolioImage(imagePath: string): Promise<{ ok?: boolean; error?: string }> {
   await ensureAuth();
   const normalized = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
+  if (normalized.startsWith('/assets/img/')) {
+    const filePath = path.join(process.cwd(), 'public', normalized);
+    try {
+      await unlink(filePath);
+      return { ok: true };
+    } catch (err) {
+      return { error: err instanceof Error ? err.message : 'Failed to delete file' };
+    }
+  }
   if (!normalized.startsWith('/assets/portfolio/')) {
     return { error: 'Invalid path' };
   }

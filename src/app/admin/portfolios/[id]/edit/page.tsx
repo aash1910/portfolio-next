@@ -1,8 +1,10 @@
 import Link from 'next/link';
 import { getProjectById } from '@/lib/portfolio';
 import { notFound } from 'next/navigation';
-import { updatePortfolio } from '../../actions';
+import { EditPortfolioForm } from '@/app/admin/portfolios/EditPortfolioForm';
 import { DeletePortfolioButton } from '@/app/admin/portfolios/DeletePortfolioButton';
+import { ImagesRepeaterField } from '@/app/admin/portfolios/ImagesRepeaterField';
+import { KeyFeaturesRepeaterField } from '@/app/admin/portfolios/KeyFeaturesRepeaterField';
 import { RepeaterField } from '@/app/admin/portfolios/RepeaterField';
 import { ThumbnailField } from '@/app/admin/portfolios/ThumbnailField';
 
@@ -24,7 +26,7 @@ export default async function EditPortfolioPage({
         </Link>
         <h1 className="text-2xl font-semibold text-gray-800">Edit: {project.title}</h1>
       </div>
-      <form action={updatePortfolio} className="w-full space-y-4 bg-white p-6 rounded-lg border border-gray-200">
+      <EditPortfolioForm>
         <input type="hidden" name="id" value={project.id} />
         <div>
           <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">Title</label>
@@ -59,8 +61,8 @@ export default async function EditPortfolioPage({
           <label htmlFor="overview" className="block text-sm font-medium text-gray-700 mb-1">Overview</label>
           <textarea id="overview" name="overview" rows={4} defaultValue={project.overview} required className="w-full border border-gray-300 rounded px-3 py-2" />
         </div>
-        <RepeaterField name="images" label="Images" initialValues={project.images} placeholder="/assets/portfolio/x/1.png" />
-        <RepeaterField name="keyFeatures" label="Key features (HTML allowed)" initialValues={project.keyFeatures} placeholder="e.g. <strong>Feature</strong>: Description" />
+        <ImagesRepeaterField name="images" label="Images" initialValues={project.images} folder={project.id} />
+        <KeyFeaturesRepeaterField name="keyFeatures" label="Key features (HTML allowed)" initialValues={project.keyFeatures} />
         <RepeaterField name="challenges" label="Challenges" initialValues={project.challenges} placeholder="Challenge description" />
         <RepeaterField name="achievements" label="Achievements" initialValues={project.achievements} placeholder="Achievement description" />
         <div>
@@ -87,7 +89,7 @@ export default async function EditPortfolioPage({
             Cancel
           </Link>
         </div>
-      </form>
+      </EditPortfolioForm>
       <DeletePortfolioButton id={project.id} />
     </div>
   );

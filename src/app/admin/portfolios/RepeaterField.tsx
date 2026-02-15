@@ -2,14 +2,22 @@
 
 import { useState } from 'react';
 
+export type RepeaterFieldRenderItemProps = {
+  value: string;
+  onChange: (value: string) => void;
+  index: number;
+};
+
 type RepeaterFieldProps = {
   name: string;
   label: string;
   initialValues: string[];
   placeholder?: string;
+  /** When provided, each row renders this instead of the default text input. The component must render a hidden input with name and value for form submit, or handle submission itself. */
+  renderItem?: (props: RepeaterFieldRenderItemProps) => React.ReactNode;
 };
 
-export function RepeaterField({ name, label, initialValues, placeholder = 'Item' }: RepeaterFieldProps) {
+export function RepeaterField({ name, label, initialValues, placeholder = 'Item', renderItem }: RepeaterFieldProps) {
   const [items, setItems] = useState<string[]>(initialValues.length > 0 ? initialValues : ['']);
 
   const add = () => setItems((prev) => [...prev, '']);
@@ -49,24 +57,32 @@ export function RepeaterField({ name, label, initialValues, placeholder = 'Item'
           + Add item
         </button>
       </div>
-      <div className="space-y-2">
+      <div className="space-y-4">
         {items.map((value, index) => (
-          <div key={index} className="flex gap-2 items-center">
-            <input
-              type="hidden"
-              name={name}
-              value={value}
-              readOnly
-              aria-hidden
-            />
-            <input
-              type="text"
-              value={value}
-              onChange={(e) => update(index, e.target.value)}
-              placeholder={placeholder}
-              className="flex-1 border border-gray-300 rounded px-3 py-2"
-            />
-            <div className="flex items-center gap-0.5 shrink-0">
+          <div key={index} className="flex gap-2 items-start">
+            <div className="flex-1 min-w-0">
+              {renderItem ? (
+                renderItem({ value, onChange: (v) => update(index, v), index })
+              ) : (
+                <>
+                  <input
+                    type="hidden"
+                    name={name}
+                    value={value}
+                    readOnly
+                    aria-hidden
+                  />
+                  <input
+                    type="text"
+                    value={value}
+                    onChange={(e) => update(index, e.target.value)}
+                    placeholder={placeholder}
+                    className="w-full border border-gray-300 rounded px-3 py-2"
+                  />
+                </>
+              )}
+            </div>
+            <div className="flex items-center gap-0.5 shrink-0 pt-1">
               <button
                 type="button"
                 onClick={() => moveUp(index)}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { uploadThumbnailToLocal, getLocalPortfolioImages, getLocalPortfolioFolders, deletePortfolioImage } from './actions';
+import { uploadThumbnailToLocal, getLocalPortfolioImages, getLocalPortfolioFolders, getLocalImgImages, deletePortfolioImage } from './actions';
 
 const VALID_FOLDER_REGEX = /^[a-zA-Z0-9_-]+$/;
 
@@ -14,13 +14,29 @@ function pathToFolder(p: string): string {
 type ThumbnailFieldProps = {
   name: string;
   defaultValue?: string;
+  /** Controlled: pass value and onChange when using inside a repeater or parent-controlled form */
+  value?: string;
+  onChange?: (path: string) => void;
   label?: string;
-  /** Optional folder under assets/portfolio (e.g. project id) to save uploads into */
+  /** Optional folder under assets/portfolio (e.g. project id) to save uploads into. Ignored when assetsDir is "img". */
   folder?: string;
+  /** "img" saves to /assets/img/, "portfolio" (default) saves to /assets/portfolio/[folder] */
+  assetsDir?: 'portfolio' | 'img';
+  /** Optional suffix for input ids to avoid duplicates when multiple ThumbnailFields are on the page (e.g. repeater index) */
+  idSuffix?: string;
 };
 
-export function ThumbnailField({ name, defaultValue = '', label = 'Thumbnail', folder }: ThumbnailFieldProps) {
-  const [value, setValue] = useState(defaultValue);
+export function ThumbnailField({ name, defaultValue = '', value: controlledValue, onChange, label = 'Thumbnail', folder, assetsDir = 'portfolio', idSuffix }: ThumbnailFieldProps) {
+  const [internalValue, setInternalValue] = useState(defaultValue);
+  const isControlled = controlledValue !== undefined;
+  const value = isControlled ? controlledValue : internalValue;
+  const updateValue = useCallback(
+    (newVal: string) => {
+      if (isControlled) onChange?.(newVal);
+      else setInternalValue(newVal);
+    },
+    [isControlled, onChange]
+  );
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [libraryOpen, setLibraryOpen] = useState(false);
@@ -58,6 +74,19 @@ export function ThumbnailField({ name, defaultValue = '', label = 'Thumbnail', f
     if (fileInputRef.current) fileInputRef.current.value = '';
     setUploadError(null);
     setUploadFolderError(null);
+    if (assetsDir === 'img') {
+      setPendingFile(file);
+      setUploading(true);
+      const formData = new FormData();
+      formData.set('file', file);
+      formData.set('baseDir', 'img');
+      const result = await uploadThumbnailToLocal(formData);
+      setUploading(false);
+      setPendingFile(null);
+      if (result.error) setUploadError(result.error);
+      else if (result.path) updateValue(result.path);
+      return;
+    }
     setPendingFile(file);
     setUploadFolderModalOpen(true);
     const { folders: list } = await getLocalPortfolioFolders();
@@ -65,7 +94,7 @@ export function ThumbnailField({ name, defaultValue = '', label = 'Thumbnail', f
     setUploadFolderExisting(folder && list.includes(folder) ? folder : list[0] ?? 'uploads');
     setUploadFolderNew('');
     setUploadFolderChoice(folder && list.includes(folder) ? 'existing' : 'new');
-  }, [folder]);
+  }, [folder, assetsDir, updateValue]);
 
   const doUploadToFolder = useCallback(
     async (targetFolder: string) => {
@@ -75,6 +104,7 @@ export function ThumbnailField({ name, defaultValue = '', label = 'Thumbnail', f
       const formData = new FormData();
       formData.set('file', pendingFile);
       formData.set('folder', targetFolder);
+      formData.set('baseDir', 'portfolio');
       const result = await uploadThumbnailToLocal(formData);
       setUploading(false);
       setPendingFile(null);
@@ -83,9 +113,9 @@ export function ThumbnailField({ name, defaultValue = '', label = 'Thumbnail', f
         setUploadError(result.error);
         return;
       }
-      if (result.path) setValue(result.path);
+      if (result.path) updateValue(result.path);
     },
-    [pendingFile]
+    [pendingFile, updateValue]
   );
 
   const handleUploadFolderConfirm = useCallback(() => {
@@ -120,23 +150,23 @@ export function ThumbnailField({ name, defaultValue = '', label = 'Thumbnail', f
     setLibraryLoading(true);
     setLibraryPaths([]);
     setLibraryFolder('');
-    const { paths } = await getLocalPortfolioImages();
+    const { paths } = assetsDir === 'img' ? await getLocalImgImages() : await getLocalPortfolioImages();
     setLibraryPaths(paths);
     setLibraryLoading(false);
-  }, []);
+  }, [assetsDir]);
 
   const pickFromLibrary = useCallback((path: string) => {
-    setValue(path);
+    updateValue(path);
     setViewingPath(null);
     setLibraryOpen(false);
-  }, []);
+  }, [updateValue]);
 
   const handleDeletePreview = useCallback(async () => {
     if (!value) return;
     setDeleteConfirmOpen(false);
     setDeleteError(null);
-    if (!value.startsWith('/assets/portfolio/')) {
-      setValue('');
+    if (!value.startsWith('/assets/portfolio/') && !value.startsWith('/assets/img/')) {
+      updateValue('');
       return;
     }
     setDeleting(true);
@@ -146,15 +176,17 @@ export function ThumbnailField({ name, defaultValue = '', label = 'Thumbnail', f
       setDeleteError(result.error);
       return;
     }
-    setValue('');
-  }, [value]);
+    updateValue('');
+  }, [value, updateValue]);
 
   return (
     <div>
-      <label htmlFor={name} className="block text-sm font-medium text-gray-700 mb-1">
-        {label}
-      </label>
-      <input type="hidden" id={name} name={name} value={value} readOnly />
+      {label ? (
+        <label htmlFor={idSuffix != null ? `${name}-${idSuffix}` : name} className="block text-sm font-medium text-gray-700 mb-1">
+          {label}
+        </label>
+      ) : null}
+      <input type="hidden" id={idSuffix != null ? `${name}-${idSuffix}` : name} name={name} value={value} readOnly />
       <div className="flex flex-wrap items-start gap-3">
         <div
           className={`flex-shrink-0 w-24 h-24 rounded border overflow-hidden relative ${value ? 'border-gray-200 bg-gray-50' : 'border-gray-200 border-dashed bg-gray-100'}`}
@@ -201,13 +233,13 @@ export function ThumbnailField({ name, defaultValue = '', label = 'Thumbnail', f
               onChange={handleFileSelect}
               disabled={uploading}
               className="hidden"
-              id={`${name}-file`}
+              id={idSuffix != null ? `${name}-file-${idSuffix}` : `${name}-file`}
             />
             <label
-              htmlFor={`${name}-file`}
+              htmlFor={idSuffix != null ? `${name}-file-${idSuffix}` : `${name}-file`}
               className="px-3 py-1.5 text-sm font-medium rounded border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 cursor-pointer inline-block disabled:opacity-50"
             >
-              {uploading ? 'Uploading…' : 'Upload (save to /assets/portfolio/)'}
+              {uploading ? 'Uploading…' : assetsDir === 'img' ? 'Upload (save to /assets/img/)' : 'Upload (save to /assets/portfolio/)'}
             </label>
             <button
               type="button"
@@ -222,7 +254,7 @@ export function ThumbnailField({ name, defaultValue = '', label = 'Thumbnail', f
           <input
             type="text"
             value={value}
-            onChange={(e) => setValue(e.target.value)}
+            onChange={(e) => updateValue(e.target.value)}
             placeholder="Or paste image URL/path"
             className="w-full max-w-md border border-gray-300 rounded px-2 py-1.5 text-sm"
           />
@@ -309,19 +341,21 @@ export function ThumbnailField({ name, defaultValue = '', label = 'Thumbnail', f
             <div className="p-3 border-b flex justify-between items-center gap-3">
               <span className="font-medium">Choose from library</span>
               <div className="flex items-center gap-2">
-                <select
-                  value={libraryFolder}
-                  onChange={(e) => setLibraryFolder(e.target.value)}
-                  disabled={libraryLoading || libraryPaths.length === 0}
-                  className="text-sm border border-gray-300 rounded px-2 py-1.5 bg-white text-gray-700 disabled:opacity-50"
-                >
-                  <option value="">All folders</option>
-                  {libraryFolders.filter(Boolean).map((f) => (
-                    <option key={f} value={f}>
-                      {f}
-                    </option>
-                  ))}
-                </select>
+                {assetsDir === 'portfolio' ? (
+                  <select
+                    value={libraryFolder}
+                    onChange={(e) => setLibraryFolder(e.target.value)}
+                    disabled={libraryLoading || libraryPaths.length === 0}
+                    className="text-sm border border-gray-300 rounded px-2 py-1.5 bg-white text-gray-700 disabled:opacity-50"
+                  >
+                    <option value="">All folders</option>
+                    {libraryFolders.filter(Boolean).map((f) => (
+                      <option key={f} value={f}>
+                        {f}
+                      </option>
+                    ))}
+                  </select>
+                ) : null}
                 <button type="button" onClick={() => setLibraryOpen(false)} className="text-gray-500 hover:text-gray-700 p-1" title="Close">
                   ✕
                 </button>
@@ -332,7 +366,13 @@ export function ThumbnailField({ name, defaultValue = '', label = 'Thumbnail', f
                 <p className="text-sm text-gray-500">Loading…</p>
               ) : filteredLibraryPaths.length === 0 ? (
                 <p className="text-sm text-gray-500">
-                  {libraryPaths.length === 0 ? 'No images in /assets/portfolio/' : `No images in folder "${libraryFolder || 'All folders'}"`}
+                  {libraryPaths.length === 0
+                  ? assetsDir === 'img'
+                    ? 'No images in /assets/img/'
+                    : 'No images in /assets/portfolio/'
+                  : assetsDir === 'img'
+                    ? 'Pick an image'
+                    : `No images in folder "${libraryFolder || 'All folders'}"`}
                 </p>
               ) : (
                 <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">

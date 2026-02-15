@@ -17,6 +17,12 @@ model User {
   updatedAt    DateTime @updatedAt
 }
 
+model SiteSettings {
+  id        String   @id @default("default")
+  data      Json     // { header: {...}, about: {...}, resume: {...} }
+  updatedAt DateTime @updatedAt
+}
+
 model PortfolioProject {
   id               String   @id
   title            String
