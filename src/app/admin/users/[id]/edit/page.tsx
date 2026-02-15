@@ -10,10 +10,8 @@ export default async function EditUserPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const userId = parseInt(id, 10);
-  if (Number.isNaN(userId)) notFound();
   const user = await prisma.user.findUnique({
-    where: { id: userId },
+    where: { id },
     select: { id: true, email: true, name: true, role: true },
   });
   if (!user) notFound();

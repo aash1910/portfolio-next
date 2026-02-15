@@ -31,8 +31,7 @@ export async function createUser(formData: FormData) {
 export async function updateUser(formData: FormData) {
   await ensureAuth();
   const id = formData.get('id') as string;
-  const userId = parseInt(id, 10);
-  if (Number.isNaN(userId)) throw new Error('Invalid user ID');
+  if (!id) throw new Error('Invalid user ID');
   const email = (formData.get('email') as string).trim().toLowerCase();
   const name = (formData.get('name') as string)?.trim() || null;
   const role = (formData.get('role') as string)?.trim() || 'admin';
@@ -46,7 +45,7 @@ export async function updateUser(formData: FormData) {
     data.passwordHash = await bcrypt.hash(password, 10);
   }
   await prisma.user.update({
-    where: { id: userId },
+    where: { id },
     data,
   });
   revalidatePath('/admin/users');
@@ -56,9 +55,8 @@ export async function updateUser(formData: FormData) {
 export async function deleteUser(formData: FormData) {
   await ensureAuth();
   const id = formData.get('id') as string;
-  const userId = parseInt(id, 10);
-  if (Number.isNaN(userId)) throw new Error('Invalid user ID');
-  await prisma.user.delete({ where: { id: userId } });
+  if (!id) throw new Error('Invalid user ID');
+  await prisma.user.delete({ where: { id } });
   revalidatePath('/admin/users');
   redirect('/admin/users');
 }

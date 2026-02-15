@@ -2,7 +2,7 @@
 
 import { deleteUser } from './actions';
 
-export function DeleteUserButton({ id }: { id: number }) {
+export function DeleteUserButton({ id }: { id: string }) {
   return (
     <form action={deleteUser} className="mt-6 max-w-md">
       <input type="hidden" name="id" value={id} />

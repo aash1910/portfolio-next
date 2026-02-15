@@ -1,16 +1,18 @@
-// MongoDB schema. To switch back to MySQL, see prisma/README-DATABASE.md
+// MySQL schema backup — use this to switch back to MySQL.
+// To restore: copy this file over schema.prisma, set DATABASE_URL to your MySQL URL,
+// run: npx prisma generate && npx prisma migrate deploy
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "mongodb"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  id           Int      @id @default(autoincrement())
   email        String   @unique
   passwordHash String
   name         String?
@@ -20,13 +22,13 @@ model User {
 }
 
 model SiteSettings {
-  id        String   @id @default("default") @map("_id")
+  id        String   @id @default("default")
   data      Json     // { header: {...}, about: {...}, resume: {...} }
   updatedAt DateTime @updatedAt
 }
 
 model PortfolioProject {
-  id               String   @id @map("_id")
+  id               String   @id
   title            String
   shortDescription String
   category         String
@@ -39,7 +41,7 @@ model PortfolioProject {
   androidAppUrl    String?
   iosAppUrl        String?
   techStack        String
-  overview         String
+  overview         String   @db.Text
   keyFeatures      Json     // string[]
   challenges       Json     // string[]
   achievements     Json     // string[]
